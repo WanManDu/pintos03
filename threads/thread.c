@@ -232,12 +232,12 @@ thread_create (const char *name, int priority,
 		t->recent_cpu = thread_current()->recent_cpu;
 	}
 
-	/*------- PROJECT 2 : USER PROGRAMS -------*/
-	t->fd_table = palloc_get_multiple(PAL_ZERO, FD_PAGES); //FD_PAGE 변수로 선언해줌
-	if (t->fd_table == NULL)
-		return TID_ERROR;
+	// /*------- PROJECT 2 : USER PROGRAMS -------*/
+	// t->fd_table = palloc_get_multiple(PAL_ZERO, FD_PAGES); //FD_PAGE 변수로 선언해줌
+	// if (t->fd_table == NULL)
+	// 	return TID_ERROR;
 	
-	t->fd_table[STD_IN] = 0; //0,1,2로 init값 변경해 봤으나 1,2,3도 상관없다는 결론 (oom_update)
+	t->fd_table[STD_IN] = 0;
 	t->fd_table[STD_OUT] = 1;
 	t->fd_table[STD_ERR] = 2;
 	// t->next_fd = 3;

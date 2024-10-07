@@ -186,7 +186,7 @@ __do_fork (void *aux) {
 	if_.R.rax = 0;
 
 	/* 2. Duplicate PT */
-	curr->pml4 = pml4_create();
+	curr->pml4 = pml4_create();	//부모 프로세스와 다른 독립적인 주소공간을 사용
 	if (curr->pml4 == NULL)
 		goto error;
 
@@ -200,16 +200,10 @@ __do_fork (void *aux) {
 		goto error;
 #endif
 
-	/* TODO: Your code goes here.
-	 * TODO: Hint) To duplicate the file object, use `file_duplicate`
-	 * TODO:       in include/filesys/file.h. Note that parent should not return
-	 * TODO:       from the fork() until this function successfully duplicates
-	 * TODO:       the resources of parent.*/
-
 	if (parent->next_fd > FD_MAX)
     goto error;
 
-  	for (int i = 3; i <= FD_MAX; i++) { //0부터 시작하게 바꿈, 중요한지 모름 (oom_update)
+  	for (int i = 3; i <= FD_MAX; i++) { 
 		struct file *f = parent->fd_table[i];
 		if (f == NULL){
 		continue;
@@ -230,8 +224,7 @@ __do_fork (void *aux) {
 		do_iret (&if_);
 error:
 	sema_up(&curr->fork_sema);
-	// curr->process_status = TID_ERROR;
-	exit (-1); //exit(-1)으로 처리해야함 (oom_update)
+	exit (-1); 
 }
 
 /* Switch the current execution context to the f_name.
@@ -283,12 +276,9 @@ process_exec (void *f_name) {
  * does nothing. */
 int
 process_wait (tid_t child_tid UNUSED) {
-	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
-	 * XXX:       to add infinite loop here before
-	 * XXX:       implementing the process_wait. */
-	
-	struct thread *child = NULL;                 // 자식 스레드를 저장할 변수
-	if ((child = get_thread_by_tid(child_tid)) == NULL || child < 0) { //(oom_update)
+
+	struct thread *child = NULL;               
+	if ((child = get_thread_by_tid(child_tid)) == NULL || child < 0) { 
 		return -1;
 	}
 	sema_down(&child->wait_sema);
@@ -304,20 +294,16 @@ process_wait (tid_t child_tid UNUSED) {
 void
 process_exit (void) {
 	struct thread *curr = thread_current ();
-	/* TODO: Your code goes here.
-	 * TODO: Implement process termination message (see
-	 * TODO: project2/process_termination.html).
-	 * TODO: We recommend you to implement process resource cleanup here. */
 
-	for (int i = 3; i <= FD_MAX; i++) { //(oom_update)
+	for (int i = 3; i <= FD_MAX; i++) { 
 		close(i);
 	}
-	palloc_free_multiple(curr->fd_table, FD_PAGES);
-	file_close(curr->running); //minjae's
+	// palloc_free_multiple(curr->fd_table, FD_PAGES);
+	file_close(curr->running);
 	process_cleanup();
 
-	sema_up(&curr->wait_sema); // 끝나고 기다리는 부모한테 세마포 넘겨줌
-	sema_down(&curr->free_sema); // 부모가 자식 free하고 세마포 넘길 때까지 기다림
+	sema_up(&curr->wait_sema);
+	sema_down(&curr->free_sema);
 }
 
 /* Free the current process's resources. */

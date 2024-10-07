@@ -95,7 +95,7 @@ process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	struct thread *parent = thread_current();
 
 	// struct intr_frame *f = (pg_round_up(rrsp()) - sizeof(struct intr_frame));  // 현재 쓰레드의 if_는 페이지 마지막에 붙어있다.
-	// memcpy(&parent->parent_tf, f, sizeof(struct intr_frame));
+	memcpy(&parent->parent_tf, if__, sizeof(struct intr_frame));
 
 	struct intr_frame *f = (pg_round_up(rrsp()) - sizeof(struct intr_frame));
 	//왜? 왜? 왜? memcpy이건 왜??
@@ -170,6 +170,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
  *       this function. */
 // static void
 void
+
 __do_fork (void *aux) {
 	struct intr_frame if_;
 	struct thread *parent = (struct thread *) aux;

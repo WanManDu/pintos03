@@ -240,6 +240,9 @@ thread_create (const char *name, int priority,
 	t->fd_table[0] = 0; // dummy values to distinguish fd 0 and 1 from NULL
 	t->fd_table[1] = 1;
 	t->fd_table[2] = 2;
+	for (int i = 3; i <= 128; i++) {
+		t->fd_table[i] = NULL;
+	}
 
 	/* Add to run queue. */
 	thread_unblock (t);

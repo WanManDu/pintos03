@@ -5,6 +5,11 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+
+#include "threads/synch.h"
+#define FD_MAX 128
+#define PROCESS_ERR -1
+
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -90,14 +95,36 @@ struct thread {
 	tid_t tid;                          /* Thread identifier. */
 	enum thread_status status;          /* Thread state. */
 	char name[16];                      /* Name (for debugging purposes). */
-	int priority;                       /* Priority. */
+	int priority;                       /* Donation Priority. */
+	
+	int ori_priority;
+	struct lock *wait_on_lock;
+	struct list donations;
+	struct list_elem donation_elem;
+	struct list_elem all_elem;
+
+	int nice;
+	int recent_cpu;
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 
+// #ifdef USERPROG
+	uint64_t *pml4;                     /* Page map level 4 */
+	struct file *fd_table[128];
+	int next_fd;
+	struct semaphore fork_sema;
+	struct semaphore wait_sema;
+	struct semaphore free_sema;
+	struct list children;
+	struct list_elem child_elem;
+	int process_status;
+	int stdin_count;
+    int stdout_count;
+	struct lock child_lock;
+	struct file *running;		// minjae's
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
-	uint64_t *pml4;                     /* Page map level 4 */
 #endif
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */
@@ -106,6 +133,7 @@ struct thread {
 
 	/* Owned by thread.c. */
 	struct intr_frame tf;               /* Information for switching */
+	struct intr_frame parent_tf;
 	unsigned magic;                     /* Detects stack overflow. */
 };
 
@@ -114,6 +142,11 @@ struct sleeping_thread {
 	int64_t wakeup_ticks;
 	struct list_elem elem;
 };
+struct thread *get_thread_by_tid(tid_t tid);
+
+void check_priority();
+void print_ready_list(void);
+static struct list ready_list;
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -148,5 +181,4 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 void do_iret (struct intr_frame *tf);
-
 #endif /* threads/thread.h */
